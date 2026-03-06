@@ -40,6 +40,7 @@
       display: grid;
       place-items: center;
       overflow: hidden;
+      position: relative;
     }
 
     body::after {
@@ -56,6 +57,35 @@
       to { transform: rotate(360deg) scale(1.08); }
     }
 
+    .map-bg {
+      position: fixed;
+      left: 0;
+      top: -8vh;
+      width: 100vw;
+      max-width: none;
+      height: auto;
+      opacity: 0;
+      transition: opacity 1400ms ease;
+      z-index: 0;
+      pointer-events: none;
+      filter: contrast(1.05) brightness(.9);
+    }
+
+    /* If viewport gets taller than wide, scale map vertically (can exceed old bounds). */
+    @media (orientation: portrait) {
+      .map-bg {
+        width: auto;
+        height: 125vh;
+        left: 50%;
+        top: -12vh;
+        transform: translateX(-50%);
+      }
+    }
+
+    body.map-on .map-bg { opacity: .92; }
+    .easter-video { opacity: 0; }
+    body.easter-on .easter-video { opacity: .94; }
+
     .card {
       width: min(92vw, 460px);
       background: var(--card);
@@ -65,7 +95,7 @@
       box-shadow: 0 20px 45px rgba(0,0,0,.45);
       padding: 24px;
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0.2px; }
@@ -106,7 +136,7 @@
       position: fixed;
       top: 8vh;
       left: 8vw;
-      z-index: 0;
+      z-index: 1;
       display: inline-block;
       pointer-events: auto;
       animation: roam 13s ease-in-out infinite alternate;
@@ -121,6 +151,25 @@
       animation: hop 1.15s ease-in-out infinite, tilt 1.7s ease-in-out infinite;
       user-select: none;
       -webkit-user-drag: none;
+    }
+
+    body.easter-frenzy .walker-link {
+      animation: roam-frenzy 5.8s linear infinite alternate;
+    }
+
+    body.easter-frenzy .walker {
+      animation:
+        hop-frenzy .42s ease-in-out infinite,
+        tilt-frenzy .5s ease-in-out infinite,
+        zoom-frenzy 1.05s ease-in-out infinite;
+    }
+
+    body.easter-frenzy .walker.flip-on {
+      animation:
+        hop-frenzy .42s ease-in-out infinite,
+        tilt-frenzy .5s ease-in-out infinite,
+        zoom-frenzy 1.05s ease-in-out infinite,
+        flip-hit .58s ease-in-out 1;
     }
 
     @keyframes roam {
@@ -141,10 +190,64 @@
       50% { rotate: 6deg; }
     }
 
+    @keyframes roam-frenzy {
+      0%   { left: 3vw;  top: 12vh; }
+      16%  { left: 72vw; top: 10vh; }
+      33%  { left: 78vw; top: 66vh; }
+      50%  { left: 20vw; top: 70vh; }
+      66%  { left: 10vw; top: 22vh; }
+      83%  { left: 58vw; top: 35vh; }
+      100% { left: 6vw;  top: 58vh; }
+    }
+
+    @keyframes hop-frenzy {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-28px); }
+    }
+
+    @keyframes tilt-frenzy {
+      0%, 100% { rotate: -14deg; }
+      50% { rotate: 15deg; }
+    }
+
+    @keyframes zoom-frenzy {
+      0%, 100% { scale: 1; }
+      50% { scale: 1.24; }
+    }
+
+    @keyframes flip-hit {
+      0% { transform: rotate(0deg) scale(1); }
+      45% { transform: rotate(180deg) scale(1.08); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .audio-toggle {
+      position: fixed;
+      right: 14px;
+      bottom: 12px;
+      z-index: 5;
+      border: none;
+      background: transparent;
+      color: #ffffff;
+      font-family: 'Folio Lt Light', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      letter-spacing: .3px;
+      cursor: pointer;
+      opacity: .9;
+      padding: 6px 8px;
+    }
+    .audio-toggle.off { color: #ef4444; }
+
     .error { margin-top: 10px; color: #fecaca; font-size: 13px; }
   </style>
 </head>
-<body>
+<body data-elapsed="{{ walker_elapsed|default:0 }}">
+  <img class="map-bg" src="/static/FraMauroDetailedMapInverted.jpg" alt="Mapa de fundo" />
+  {% if easter_song == 'joseamorim' %}
+  <video id="easterVideo" class="map-bg easter-video" autoplay loop playsinline>
+    <source src="/static/sou-rei.mp4" type="video/mp4" />
+  </video>
+  {% endif %}
   <form class="card" method="post" autocomplete="off">
     {% csrf_token %}
     <h1>🚀 Radar de Concursos</h1>
@@ -152,7 +255,7 @@
 
     <div class="field">
       <label for="password">Password</label>
-      <input id="password" type="password" name="password" placeholder="••••••••••" required autofocus />
+      <input id="password" type="password" name="password" placeholder="••••••••••" autofocus />
     </div>
 
     <button type="submit">Entrar</button>
@@ -162,28 +265,157 @@
     {% endif %}
   </form>
 
-  <a class="walker-link" href="https://en.wikipedia.org/wiki/Afonso_V_of_Portugal" target="_blank" rel="noopener noreferrer" aria-label="Afonso V of Portugal">
-    <img class="walker" src="/static/afonso-v.png" alt="afonso" />
+  <a class="walker-link" style="animation-delay: {{ walker_delay_roam }};" href="https://en.wikipedia.org/wiki/Afonso_V_of_Portugal" target="_blank" rel="noopener noreferrer" aria-label="Afonso V of Portugal">
+    <img class="walker" style="animation-delay: {{ walker_delay_hop }}, {{ walker_delay_tilt }};" src="/static/afonso-v.png" alt="afonso" />
   </a>
 
   <audio id="introMusic" preload="auto" autoplay loop playsinline>
     <source src="/static/mp3_site.mp3" type="audio/mpeg" />
   </audio>
 
+  <button type="button" id="audioToggle" class="audio-toggle">Audio</button>
+
   <script>
     const introMusic = document.getElementById('introMusic');
+    const easterVideo = document.getElementById('easterVideo');
+    const audioToggle = document.getElementById('audioToggle');
+    const walkerImg = document.querySelector('.walker');
+    const activeKey = easterVideo ? 'login_easter_video_time' : null;
+    let mapActivated = false;
+    let beatLoopStarted = false;
 
-    async function startMusic() {
-      if (!introMusic) return;
+    function activeMedia() {
+      return easterVideo || introMusic;
+    }
+
+    function restorePlaybackTime() {
+      const media = activeMedia();
+      if (!media || !activeKey) return;
+      const raw = localStorage.getItem(activeKey);
+      const t = Number(raw || 0);
+      if (!Number.isFinite(t) || t <= 0) return;
+
+      const applyTime = () => {
+        try {
+          if (Number.isFinite(media.duration) && media.duration > 0) {
+            media.currentTime = Math.min(t, Math.max(0, media.duration - 0.35));
+          } else {
+            media.currentTime = t;
+          }
+        } catch (e) {}
+      };
+
+      if (media.readyState >= 1) applyTime();
+      else media.addEventListener('loadedmetadata', applyTime, { once: true });
+    }
+
+    function persistPlaybackTime() {
+      const media = activeMedia();
+      if (!media || !activeKey) return;
       try {
-        introMusic.volume = 0.45;
-        await introMusic.play();
-      } catch (e) {
-        // Browser may block autoplay until first user interaction.
+        localStorage.setItem(activeKey, String(media.currentTime || 0));
+      } catch (e) {}
+    }
+
+    function refreshAudioToggle() {
+      if (!audioToggle) return;
+      const media = activeMedia();
+      const isOff = !media || media.muted || media.volume === 0;
+      audioToggle.classList.toggle('off', isOff);
+    }
+
+    function maybeSwitchToMap() {
+      if (easterVideo) return;
+      if (!introMusic || mapActivated) return;
+      if (introMusic.currentTime >= 38) {
+        document.body.classList.add('map-on');
+        mapActivated = true;
       }
     }
 
-    window.addEventListener('load', startMusic);
+    function triggerFlip() {
+      if (!walkerImg) return;
+      walkerImg.classList.remove('flip-on');
+      void walkerImg.offsetWidth;
+      walkerImg.classList.add('flip-on');
+      setTimeout(() => walkerImg.classList.remove('flip-on'), 620);
+    }
+
+    function startBeatSyncedFlips() {
+      if (!easterVideo || beatLoopStarted || !window.AudioContext) return;
+      beatLoopStarted = true;
+
+      const ctx = new AudioContext();
+      const src = ctx.createMediaElementSource(easterVideo);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      let lastHit = 0;
+
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        let bass = 0;
+        for (let i = 0; i < 10; i++) bass += data[i];
+        bass = bass / 10;
+
+        const now = performance.now();
+        if (bass > 158 && now - lastHit > 420) {
+          triggerFlip();
+          lastHit = now;
+        }
+        requestAnimationFrame(tick);
+      };
+
+      ctx.resume().then(() => requestAnimationFrame(tick)).catch(() => {});
+    }
+
+    async function startMusic() {
+      const media = activeMedia();
+      if (!media) return;
+      try {
+        if (easterVideo && introMusic) {
+          introMusic.pause();
+          introMusic.muted = true;
+        }
+        // Respeita o estado mute atual (não reativar áudio sozinho).
+        media.volume = media.volume || 0.45;
+        await media.play();
+        if (easterVideo) {
+          document.body.classList.add('easter-on');
+          document.body.classList.add('easter-frenzy');
+          startBeatSyncedFlips();
+        }
+      } catch (e) {
+        // Browser may block autoplay until first user interaction.
+      }
+      refreshAudioToggle();
+    }
+
+    if (audioToggle) {
+      audioToggle.addEventListener('click', () => {
+        const media = activeMedia();
+        if (!media) return;
+        media.muted = !media.muted;
+        if (!media.muted) startMusic();
+        refreshAudioToggle();
+      });
+    }
+
+    introMusic?.addEventListener('timeupdate', maybeSwitchToMap);
+
+    const mediaForEvents = activeMedia();
+    mediaForEvents?.addEventListener('timeupdate', persistPlaybackTime);
+    window.addEventListener('beforeunload', persistPlaybackTime);
+
+    window.addEventListener('load', () => {
+      restorePlaybackTime();
+      refreshAudioToggle();
+      startMusic();
+      setInterval(persistPlaybackTime, 1500);
+    });
     document.addEventListener('pointerdown', startMusic, { once: true });
     document.addEventListener('keydown', startMusic, { once: true });
     document.addEventListener('visibilitychange', () => {

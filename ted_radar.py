@@ -18,6 +18,8 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "radar.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
 SEM_API = "https://tedweb.api.ted.europa.eu/private-search/api/v1/notices/search"
 VIEWER_API = "https://tedweb.api.ted.europa.eu/viewer/api/v1/render"
+# Optional BASE feed endpoint (JSON). Set this in env to enable BASE ingestion.
+BASE_API_URL = os.getenv("BASE_API_URL", "").strip()
 
 SEARCH_QUERIES = [
     "(FT IN (architecture)) AND (buyer-country IN (PRT)) SORT BY ND DESC",
@@ -569,14 +571,98 @@ def enrich_missing_fields(limit: int = 150) -> int:
     return updated
 
 
+def fetch_base_opportunities(limit: int = 200) -> List[Opportunity]:
+    """
+    Optional BASE ingestion via JSON endpoint configured in BASE_API_URL.
+    Expected payload: list[dict] or {"items": list[dict]} with common keys.
+    """
+    if not BASE_API_URL:
+        return []
+
+    try:
+        r = requests.get(BASE_API_URL, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        payload = r.json()
+    except Exception:
+        return []
+
+    rows = payload.get("items") if isinstance(payload, dict) else payload
+    if not isinstance(rows, list):
+        return []
+
+    out: List[Opportunity] = []
+    seen = set()
+    for row in rows[:limit]:
+        if not isinstance(row, dict):
+            continue
+
+        title = str(row.get("title") or row.get("designacao") or row.get("objetoContrato") or "").strip()
+        link = str(row.get("url") or row.get("link") or row.get("href") or "").strip()
+        notice_number = str(row.get("notice_number") or row.get("numeroAnuncio") or row.get("id") or "").strip()
+        entity = str(row.get("entity") or row.get("entidade") or row.get("adjudicante") or "").strip()
+        location = str(row.get("location") or row.get("local") or row.get("distrito") or "").strip() or None
+        cpv = str(row.get("cpv") or row.get("codigoCPV") or "").strip() or None
+        published = str(row.get("published_at") or row.get("dataPublicacao") or row.get("publicationDate") or "").strip() or None
+        deadline = str(row.get("deadline_at") or row.get("prazo") or row.get("deadline") or "").strip() or None
+        estimated = str(row.get("estimated_value") or row.get("precoBase") or row.get("valor") or "").strip() or None
+        criterion = str(row.get("criterion") or row.get("criterio") or "").strip() or None
+
+        if not title:
+            continue
+        if not link:
+            link = f"https://www.base.gov.pt/Base4/pt/" + (notice_number if notice_number else "")
+
+        h = _hash_for_item(title, link)
+        if h in seen:
+            continue
+        seen.add(h)
+
+        score, category = _score_and_category(title, "", cpv)
+        out.append(
+            Opportunity(
+                source="BASE",
+                notice_number=notice_number,
+                title=title,
+                description="",
+                entity=entity,
+                country="Portugal",
+                location=location,
+                cpv=cpv,
+                estimated_value=estimated,
+                criterion=criterion,
+                published_at=published,
+                deadline_at=deadline,
+                link=link,
+                category=category,
+                relevance_score=score,
+                hash_id=h,
+            )
+        )
+
+    return out
+
+
 def run_sync() -> dict:
     ensure_db()
-    items = fetch_ted_opportunities()
+    ted_items = fetch_ted_opportunities()
+    base_items = fetch_base_opportunities()
+    items = ted_items + base_items
     inserted = upsert_opportunities(items)
     enriched = enrich_missing_fields(limit=120)
-    return {"fetched": len(items), "inserted": inserted, "enriched": enriched}
+    return {
+        "fetched": len(items),
+        "fetched_ted": len(ted_items),
+        "fetched_base": len(base_items),
+        "inserted": inserted,
+        "enriched": enriched,
+    }
 
 
 if __name__ == "__main__":
     result = run_sync()
-    print(f"TED sync done. fetched={result['fetched']} inserted={result['inserted']} enriched={result['enriched']}")
+    print(
+        "Sync done. "
+        f"fetched={result['fetched']} "
+        f"(ted={result['fetched_ted']}, base={result['fetched_base']}) "
+        f"inserted={result['inserted']} enriched={result['enriched']}"
+    )

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sobre · Radar de Concursos</title>
+  <style>
+    @font-face {
+      font-family: 'Folio Lt Light';
+      src: url('/static/Folio-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root{--bg:#f4f1ea;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb}
+    body{margin:0;font-family:'Folio Lt Light',-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#f7f7f8,#f2f2f4);color:var(--ink)}
+    .wrap{max-width:980px;margin:0 auto;padding:24px}
+    .card{background:rgba(255,255,255,.92);border:1px solid #e8e8ec;border-radius:16px;padding:20px 22px;box-shadow:0 10px 24px rgba(0,0,0,.04)}
+    h1{margin:0 0 8px 0}
+    p{line-height:1.52;margin:10px 0}
+    .muted{color:var(--muted)}
+    a{color:#0f766e;text-decoration:none;font-weight:600}
+    a:hover{text-decoration:underline}
+    .back{display:inline-block;margin-bottom:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/dashboard/">← voltar ao dashboard</a>
+
+    <div class="card">
+      <h1>Sobre o Radar de Concursos</h1>
+      <p class="muted">Versão actual · {{ current_year }}</p>
+
+      <p>Este radar é um bicho curioso, com olhos de lince e pouca paciência para ruído: vai buscar informação pública de contratação, arruma-a, cruza campos, limpa duplicados, calcula relevância e entrega-te uma vista legível, para que não tenhas de andar a escavar anúncios às cegas. A fonte principal, nesta fase, é o TED; a integração com o BASE já está montada na arquitectura e pronta a ligar com token de acesso, para aumentar cobertura nacional sem perder critério.</p>
+
+      <p>A lógica é simples, mas não simplista: quando o texto, os CPV e o contexto cheiram a arquitectura (e primas próximas), o score sobe; quando cheiram a ruído, desce. Depois, és tu quem manda no filtro com o intervalo de score, no estado de cada oportunidade, nas notas de triagem e no olhar crítico final, porque isto não é um oráculo místico — é um copiloto com bom gosto e vontade de te poupar tempo.</p>
+
+      <p>Também há etiqueta <strong>NOVO</strong> para o que entrou recentemente, para não te escapar o fresco no meio do arquivo, e há margem para afinar tudo: pesos, fontes, priorização, ritmo de actualização e até o tom da máquina (porque um radar elegante também pode ter graça). Em suma, a proposta é esta: menos ruído, mais sinal, decisões mais rápidas e melhor informadas.</p>
+
+      <p>Se tiveres sugestões, críticas, ideias ousadas ou melhorias cirúrgicas, envia para <strong><a href="mailto:info@nrp.pt">info@nrp.pt</a></strong>. Estou pronto para receber feedback e evoluir isto contigo, com estilo e sem burocracia inútil.</p>
+    </div>
+  </div>
+</body>
+</html>

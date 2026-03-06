@@ -95,13 +95,35 @@
     .title{max-width:520px;line-height:1.35}
     .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600}
     .favorite{background:#d8f3dc}.irrelevant{background:#ffe5e5}.review{background:#fff3cd}.new{background:#f1f3f5}
+    .new-pill{display:inline-block;margin-left:8px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.2px;background:#fde68a;color:#7c2d12;border:1px solid #f59e0b}
 
     select.badge{
       color:#111827;
       border-color:#d1d5db;
     }
+    select.badge.favorite{background:#d8f3dc !important;border-color:#16a34a !important;color:#14532d !important}
+    select.badge.irrelevant{background:#ffe5e5 !important;border-color:#ef4444 !important;color:#7f1d1d !important}
+    select.badge.review{background:#fff3cd !important;border-color:#f59e0b !important;color:#78350f !important}
+    select.badge.new{background:#f1f3f5 !important;border-color:#9ca3af !important;color:#374151 !important}
     .link{color:#0f766e;text-decoration:none;font-weight:600}
     .link:hover{text-decoration:underline}
+    .theme-toggle-corner{
+      position:fixed;
+      top:10px;
+      right:12px;
+      z-index:20;
+      border:1px solid #d1d5db;
+      border-radius:999px;
+      padding:5px 10px;
+      font-size:12px;
+      letter-spacing:.2px;
+      background:rgba(255,255,255,.75);
+      color:#374151;
+      cursor:pointer;
+      backdrop-filter: blur(3px);
+      opacity:.86;
+    }
+    body.dark .theme-toggle-corner{background:rgba(17,24,39,.72);color:#d1d5db;border-color:#4b5563}
     .score-wrap{min-width:130px}
     .score-row{display:flex;align-items:center;gap:8px}
     .score-track{height:8px;flex:1;background:#e5e7eb;border-radius:999px;overflow:hidden}
@@ -118,7 +140,7 @@
       body:not(.light) tr:hover{background:#1b2027}
       body:not(.light) .score-track{background:#2f3640}
       body:not(.light) .score-val{color:#cbd5e1}
-      body:not(.light) select.badge{color:#e5e7eb !important;border-color:#4b5563 !important}
+      body:not(.light) select.badge{color:#111827 !important;border-color:#4b5563 !important}
     }
 
     body.light {
@@ -146,7 +168,7 @@
     body.dark tr:hover{background:#1b2027}
     body.dark .score-track{background:#2f3640}
     body.dark .score-val{color:#cbd5e1}
-    body.dark select.badge{color:#e5e7eb !important;border-color:#4b5563 !important}
+    body.dark select.badge{color:#111827 !important;border-color:#4b5563 !important}
 
     @media (max-width:1200px){
       .controls{grid-template-columns:1fr 1fr}
@@ -155,19 +177,20 @@
   </style>
 </head>
 <body>
+  <button type="button" id="themeToggle" class="theme-toggle-corner">modo</button>
   <img id="walkerAfonso" class="dashboard-walker" src="/static/afonso-v.png" alt="afonso no fundo" />
   <img id="walkerLion" class="dashboard-lion" src="/static/leaozinhoafonso-v.png" alt="leaozinho no fundo" />
 <div class="wrap">
   <div class="hero">
     <h1>Radar de Concursos</h1>
-    <div class="sub">Monitorização de Concursos de Arquitectura em Portugal. © Manuel da Pedrada {{ current_year }} · <a href="/logout/" style="color:inherit">sair</a></div>
+    <div class="sub">Monitorização de Concursos de Arquitectura em Portugal. © Manuel da Pedrada {{ current_year }} · <a href="/about/" style="color:inherit">sobre</a> · <a href="/logout/" style="color:inherit">sair</a></div>
   </div>
 
   <div class="kpis">
     <div class="kpi"><div class="t">Resultados na vista</div><div class="v">{{ items|length }}</div></div>
     <div class="kpi"><div class="t">Categoria</div><div class="v">{{ selected_category }}</div></div>
     <div class="kpi"><div class="t">Estado</div><div class="v">{{ selected_status }}</div></div>
-    <div class="kpi"><div class="t">Score mínimo</div><div class="v">{{ min_score }}</div></div>
+    <div class="kpi"><div class="t">Intervalo de score</div><div class="v">{{ min_score }}–{{ max_score }}</div></div>
   </div>
 
   <form method="get" class="controls" id="filtersForm">
@@ -186,7 +209,15 @@
       {% endfor %}
     </select>
 
-    <input type="number" min="0" max="100" name="min_score" id="filter_min_score" value="{{ min_score }}" title="Score mínimo de relevância (0-100). Quanto maior, mais estrito o filtro." aria-label="Score mínimo de relevância" />
+    <div style="display:grid;gap:4px;min-width:220px">
+      <label for="filter_min_score" style="font-size:12px;color:var(--muted)">score mínimo: <span id="minScoreVal">{{ min_score }}</span></label>
+      <input type="range" min="0" max="100" step="1" name="min_score" id="filter_min_score" value="{{ min_score }}" title="Score mínimo de relevância (0-100)." aria-label="Score mínimo de relevância" />
+    </div>
+
+    <div style="display:grid;gap:4px;min-width:220px">
+      <label for="filter_max_score" style="font-size:12px;color:var(--muted)">score máximo: <span id="maxScoreVal">{{ max_score }}</span></label>
+      <input type="range" min="0" max="100" step="1" name="max_score" id="filter_max_score" value="{{ max_score }}" title="Score máximo de relevância (0-100)." aria-label="Score máximo de relevância" />
+    </div>
 
     <select name="sort_by" id="filter_sort_by">
       <option value="score" {% if sort_by == 'score' %}selected{% endif %}>ordenar: score</option>
@@ -203,9 +234,8 @@
     </select>
 
     <button type="submit" style="display:none">Aplicar</button>
-    <button type="button" id="themeToggle">🌓 Tema</button>
   </form>
-  <div class="sub" style="margin: 2px 2px 12px 2px;">🎯 <strong>Score mínimo</strong> = relevância mínima (0–100). Ex.: 20 = abrangente, 40 = mais focado, 60+ = muito restrito.</div>
+  <div class="sub" style="margin: 2px 2px 12px 2px;">🎯 <strong>Intervalo de score</strong> = faixa de relevância (0–100). Ex.: 20–80 = equilibrado, 40–100 = mais focado, 60–100 = muito restrito.</div>
 
   <div class="table-wrap">
     <table>
@@ -218,7 +248,7 @@
         {% for r in items %}
         <tr>
           <td>{{ r.notice_number }}</td>
-          <td class="title">{{ r.title }}</td>
+          <td class="title">{{ r.title }}{% if r.is_new %}<span class="new-pill">NOVO</span>{% endif %}</td>
           <td>{{ r.category }}</td>
           <td class="score-wrap">
             <div class="score-row">
@@ -259,7 +289,19 @@ function getCookie(name){
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
-document.querySelectorAll("[data-kind='status']").forEach(el=>el.addEventListener('change',()=>save(el.dataset.id)));
+function refreshStatusColor(el){
+  if(!el) return;
+  el.classList.remove('favorite','irrelevant','review','new');
+  el.classList.add((el.value || 'new').toLowerCase());
+}
+
+document.querySelectorAll("[data-kind='status']").forEach(el=>{
+  refreshStatusColor(el);
+  el.addEventListener('change',()=>{
+    refreshStatusColor(el);
+    save(el.dataset.id);
+  });
+});
 document.querySelectorAll("[data-kind='note']").forEach(el=>el.addEventListener('blur',()=>save(el.dataset.id)));
 
 // Manual theme toggle (with persistence)
@@ -287,13 +329,36 @@ if (themeToggle) {
 
 // Auto-apply filters without button
 const filtersForm = document.getElementById('filtersForm');
-const filterIds = ['filter_category','filter_status','filter_min_score','filter_sort_by','filter_sort_order'];
+const filterIds = ['filter_category','filter_status','filter_min_score','filter_max_score','filter_sort_by','filter_sort_order'];
 filterIds.forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('change', () => filtersForm.submit());
 });
 
 const qInput = document.getElementById('filter_q');
+const minScoreEl = document.getElementById('filter_min_score');
+const maxScoreEl = document.getElementById('filter_max_score');
+const minScoreVal = document.getElementById('minScoreVal');
+const maxScoreVal = document.getElementById('maxScoreVal');
+
+function syncScoreRange() {
+  if (!minScoreEl || !maxScoreEl) return;
+  let minV = Number(minScoreEl.value || 0);
+  let maxV = Number(maxScoreEl.value || 100);
+  if (minV > maxV) {
+    if (document.activeElement === minScoreEl) maxScoreEl.value = minV;
+    else minScoreEl.value = maxV;
+    minV = Number(minScoreEl.value || 0);
+    maxV = Number(maxScoreEl.value || 100);
+  }
+  if (minScoreVal) minScoreVal.textContent = String(minV);
+  if (maxScoreVal) maxScoreVal.textContent = String(maxV);
+}
+
+if (minScoreEl) minScoreEl.addEventListener('input', syncScoreRange);
+if (maxScoreEl) maxScoreEl.addEventListener('input', syncScoreRange);
+syncScoreRange();
+
 let qTimer = null;
 if (qInput) {
   qInput.addEventListener('input', () => {
