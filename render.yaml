@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: radar-concursos
+    env: python
+    rootDir: radar_concursos
+    buildCommand: pip install -r requirements-render.txt && python django_web/manage.py collectstatic --noinput
+    startCommand: cd django_web && python manage.py migrate && gunicorn radar_django.wsgi:application --bind 0.0.0.0:$PORT
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: RADAR_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: radar-db
+          property: connectionString
+
+  - type: cron
+    name: radar-sync-cron
+    env: python
+    rootDir: radar_concursos
+    schedule: "0 */3 * * *"
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: python ted_radar.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: radar-db
+          property: connectionString
+
+databases:
+  - name: radar-db
+    plan: free
+    postgresMajorVersion: 16

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Radar de Concursos</title>
+  <style>
+    @font-face {
+      font-family: 'Folio Lt Light';
+      src: url('/static/Folio-Light.otf') format('opentype');
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg:#f4f1ea;
+      --card:#ffffff;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --brand:#7c5b2a;
+    }
+    body{font-family:'Folio Lt Light',-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#f7f7f8,#f2f2f4);color:var(--ink);margin:0;overflow-x:hidden}
+    .dashboard-walker{position:fixed;top:10vh;left:8vw;height:min(24vh,210px);opacity:.22;z-index:0;pointer-events:none;filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));animation:dash-roam 16s ease-in-out infinite alternate,dash-hop 1.2s ease-in-out infinite,dash-tilt 2s ease-in-out infinite;will-change:transform,top,left}
+    .dashboard-lion{position:fixed;top:62vh;left:72vw;height:min(20vh,170px);opacity:.2;z-index:0;pointer-events:none;filter:drop-shadow(0 8px 18px rgba(0,0,0,.32));animation:lion-roam 19s ease-in-out infinite alternate,lion-hop 1.35s ease-in-out infinite,lion-tilt 2.3s ease-in-out infinite;will-change:transform,top,left}
+    .dashboard-lion.clone{animation:lion-roam-random 17s ease-in-out infinite alternate-reverse,lion-hop-2 1.1s ease-in-out infinite,lion-tilt-2 1.9s ease-in-out infinite}
+    .wrap{position:relative;z-index:1;max-width:1500px;margin:0 auto;padding:22px}
+
+    @keyframes dash-roam {
+      0%   { left: 4vw;  top: 10vh; }
+      25%  { left: 78vw; top: 16vh; }
+      50%  { left: 74vw; top: 74vh; }
+      75%  { left: 18vw; top: 70vh; }
+      100% { left: 6vw;  top: 32vh; }
+    }
+    @keyframes dash-hop {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes dash-tilt {
+      0%,100% { rotate: -4deg; }
+      50% { rotate: 5deg; }
+    }
+    @keyframes lion-roam {
+      0%   { left: 72vw; top: 62vh; }
+      25%  { left: 14vw; top: 58vh; }
+      50%  { left: 12vw; top: 18vh; }
+      75%  { left: 68vw; top: 20vh; }
+      100% { left: 74vw; top: 70vh; }
+    }
+    @keyframes lion-hop {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes lion-tilt {
+      0%,100% { rotate: 5deg; }
+      50% { rotate: -4deg; }
+    }
+    @keyframes lion-roam-random {
+      0%   { left: var(--x0, 58vw); top: var(--y0, 24vh); }
+      25%  { left: var(--x1, 10vw); top: var(--y1, 42vh); }
+      50%  { left: var(--x2, 34vw); top: var(--y2, 76vh); }
+      75%  { left: var(--x3, 80vw); top: var(--y3, 52vh); }
+      100% { left: var(--x4, 64vw); top: var(--y4, 14vh); }
+    }
+    @keyframes lion-hop-2 {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+    @keyframes lion-tilt-2 {
+      0%,100% { rotate: -6deg; }
+      50% { rotate: 4deg; }
+    }
+    .hero{background:rgba(255,255,255,.82);backdrop-filter: blur(10px);border:1px solid #e8e8ec;border-radius:20px;padding:18px 20px;box-shadow:0 10px 30px rgba(0,0,0,.06);margin-bottom:14px}
+    h1{margin:0 0 6px 0;font-size:28px}
+    .sub{color:var(--muted);font-size:14px}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 14px}
+    .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+    .kpi .t{font-size:12px;color:var(--muted)}
+    .kpi .v{font-size:22px;font-weight:700}
+
+    .controls{display:grid;grid-template-columns:2fr repeat(6,1fr);gap:10px;background:rgba(255,255,255,.86);backdrop-filter: blur(8px);border:1px solid #e8e8ec;border-radius:14px;padding:12px;margin-bottom:10px}
+    input,select,button{padding:10px 11px;border:1px solid #d9d9df;border-radius:10px;background:#fff;transition:all .15s ease}
+    input:focus,select:focus{outline:none;border-color:#8aa9ff;box-shadow:0 0 0 3px rgba(105,145,255,.18)}
+    button{background:#111827;color:#fff;border-color:#111827;font-weight:600;cursor:pointer}
+
+    .table-wrap{background:rgba(255,255,255,.92);border:1px solid #e8e8ec;border-radius:14px;overflow:auto;max-height:73vh;box-shadow:0 10px 24px rgba(0,0,0,.04)}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    thead th{position:sticky;top:0;background:#fbfbfd;border-bottom:1px solid var(--line);z-index:2;color:#4b5563;font-weight:600}
+    th,td{padding:12px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+    tr:hover{background:#faf8f3}
+
+    .title{max-width:520px;line-height:1.35}
+    .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600}
+    .favorite{background:#d8f3dc}.irrelevant{background:#ffe5e5}.review{background:#fff3cd}.new{background:#f1f3f5}
+
+    select.badge{
+      color:#111827;
+      border-color:#d1d5db;
+    }
+    .link{color:#0f766e;text-decoration:none;font-weight:600}
+    .link:hover{text-decoration:underline}
+    .score-wrap{min-width:130px}
+    .score-row{display:flex;align-items:center;gap:8px}
+    .score-track{height:8px;flex:1;background:#e5e7eb;border-radius:999px;overflow:hidden}
+    .score-fill{height:100%;background:linear-gradient(90deg,#93c5fd,#2563eb)}
+    .score-val{font-weight:700;font-size:12px;color:#374151;min-width:30px;text-align:right}
+
+    @media (prefers-color-scheme: dark){
+      :root { --bg:#111315; --card:#171a1f; --ink:#e5e7eb; --muted:#9ca3af; --line:#2a2f36; --brand:#93c5fd; }
+      body:not(.light){background:linear-gradient(180deg,#0f1114,#12151a);color:var(--ink)}
+      body:not(.light) .hero, body:not(.light) .controls, body:not(.light) .table-wrap, body:not(.light) .kpi{background:rgba(23,26,31,.9)!important;border-color:var(--line)!important;box-shadow:none}
+      body:not(.light) input, body:not(.light) select, body:not(.light) button{background:#0f1318;color:#e5e7eb;border-color:#2f3640}
+      body:not(.light) button{background:#1f2937;color:#e5e7eb}
+      body:not(.light) thead th{background:#1b2027;color:#cbd5e1}
+      body:not(.light) tr:hover{background:#1b2027}
+      body:not(.light) .score-track{background:#2f3640}
+      body:not(.light) .score-val{color:#cbd5e1}
+      body:not(.light) select.badge{color:#e5e7eb !important;border-color:#4b5563 !important}
+    }
+
+    body.light {
+      --bg:#f4f1ea; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --brand:#7c5b2a;
+      background:linear-gradient(180deg,#f7f7f8,#f2f2f4);color:var(--ink)
+    }
+    body.light .hero, body.light .controls, body.light .table-wrap, body.light .kpi{background:rgba(255,255,255,.9)!important;border-color:#e8e8ec!important;box-shadow:0 10px 24px rgba(0,0,0,.04)}
+    body.light input, body.light select, body.light button{background:#fff;color:#111827;border-color:#d9d9df}
+    body.light button{background:#111827;color:#fff;border-color:#111827}
+    body.light thead th{background:#fbfbfd;color:#4b5563}
+    body.light tr:hover{background:#faf8f3}
+    body.light .score-track{background:#e5e7eb}
+    body.light .score-val{color:#374151}
+    body.light select.badge{color:#111827 !important;border-color:#d1d5db !important}
+
+
+    body.dark {
+      --bg:#111315; --card:#171a1f; --ink:#e5e7eb; --muted:#9ca3af; --line:#2a2f36; --brand:#93c5fd;
+      background:linear-gradient(180deg,#0f1114,#12151a);color:var(--ink)
+    }
+    body.dark .hero, body.dark .controls, body.dark .table-wrap, body.dark .kpi{background:rgba(23,26,31,.9)!important;border-color:var(--line)!important;box-shadow:none}
+    body.dark input, body.dark select, body.dark button{background:#0f1318;color:#e5e7eb;border-color:#2f3640}
+    body.dark button{background:#1f2937;color:#e5e7eb}
+    body.dark thead th{background:#1b2027;color:#cbd5e1}
+    body.dark tr:hover{background:#1b2027}
+    body.dark .score-track{background:#2f3640}
+    body.dark .score-val{color:#cbd5e1}
+    body.dark select.badge{color:#e5e7eb !important;border-color:#4b5563 !important}
+
+    @media (max-width:1200px){
+      .controls{grid-template-columns:1fr 1fr}
+      .kpis{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <img id="walkerAfonso" class="dashboard-walker" src="/static/afonso-v.png" alt="afonso no fundo" />
+  <img id="walkerLion" class="dashboard-lion" src="/static/leaozinhoafonso-v.png" alt="leaozinho no fundo" />
+<div class="wrap">
+  <div class="hero">
+    <h1>Radar de Concursos</h1>
+    <div class="sub">Monitorização de Concursos de Arquitectura em Portugal. © Manuel da Pedrada {{ current_year }} · <a href="/logout/" style="color:inherit">sair</a></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="t">Resultados na vista</div><div class="v">{{ items|length }}</div></div>
+    <div class="kpi"><div class="t">Categoria</div><div class="v">{{ selected_category }}</div></div>
+    <div class="kpi"><div class="t">Estado</div><div class="v">{{ selected_status }}</div></div>
+    <div class="kpi"><div class="t">Score mínimo</div><div class="v">{{ min_score }}</div></div>
+  </div>
+
+  <form method="get" class="controls" id="filtersForm">
+    <input type="text" name="q" id="filter_q" placeholder="Pesquisar por título, CPV, localização ou nº de aviso" value="{{ q }}" />
+
+    <select name="category" id="filter_category">
+      <option value="todas">categoria: todas</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if c == selected_category %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="status" id="filter_status">
+      {% for s in status_options %}
+      <option value="{{ s }}" {% if s == selected_status %}selected{% endif %}>estado: {{ s }}</option>
+      {% endfor %}
+    </select>
+
+    <input type="number" min="0" max="100" name="min_score" id="filter_min_score" value="{{ min_score }}" title="Score mínimo de relevância (0-100). Quanto maior, mais estrito o filtro." aria-label="Score mínimo de relevância" />
+
+    <select name="sort_by" id="filter_sort_by">
+      <option value="score" {% if sort_by == 'score' %}selected{% endif %}>ordenar: score</option>
+      <option value="category_priority" {% if sort_by == 'category_priority' %}selected{% endif %}>ordenar: prioridade categoria</option>
+      <option value="data_entrega" {% if sort_by == 'data_entrega' %}selected{% endif %}>ordenar: data entrega</option>
+      <option value="data_aviso" {% if sort_by == 'data_aviso' %}selected{% endif %}>ordenar: data aviso</option>
+      <option value="categoria" {% if sort_by == 'categoria' %}selected{% endif %}>ordenar: categoria A-Z</option>
+      <option value="recentes" {% if sort_by == 'recentes' %}selected{% endif %}>ordenar: mais recentes</option>
+    </select>
+
+    <select name="sort_order" id="filter_sort_order">
+      <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>ordem: desc</option>
+      <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>ordem: asc</option>
+    </select>
+
+    <button type="submit" style="display:none">Aplicar</button>
+    <button type="button" id="themeToggle">🌓 Tema</button>
+  </form>
+  <div class="sub" style="margin: 2px 2px 12px 2px;">🎯 <strong>Score mínimo</strong> = relevância mínima (0–100). Ex.: 20 = abrangente, 40 = mais focado, 60+ = muito restrito.</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>aviso</th><th>título</th><th>categoria</th><th>score</th><th>aviso</th><th>entrega</th><th>localização</th><th>Preço Base</th><th>Critério</th><th>estado</th><th>nota</th><th>link</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in items %}
+        <tr>
+          <td>{{ r.notice_number }}</td>
+          <td class="title">{{ r.title }}</td>
+          <td>{{ r.category }}</td>
+          <td class="score-wrap">
+            <div class="score-row">
+              <div class="score-track"><div class="score-fill" style="width: {{ r.relevance_score }}%"></div></div>
+              <span class="score-val">{{ r.relevance_score }}</span>
+            </div>
+          </td>
+          <td>{{ r.published_at }}</td>
+          <td>{{ r.deadline_at }}</td>
+          <td>{{ r.location }}</td>
+          <td>{{ r.estimated_value|default:'-' }}</td>
+          <td>{{ r.criterion|default:'-' }}</td>
+          <td>
+            <select class="badge {{ r.status|default:'new' }}" data-id="{{ r.id }}" data-kind="status">
+              {% for s in row_status_options %}
+              <option value="{{ s }}" {% if s == r.status %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td><input data-id="{{ r.id }}" data-kind="note" value="{{ r.feedback_note|default:'' }}" /></td>
+          <td><a class="link" href="{{ r.link }}" target="_blank">abrir</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function save(id){
+  const status = document.querySelector(`[data-id='${id}'][data-kind='status']`).value;
+  const feedback_note = document.querySelector(`[data-id='${id}'][data-kind='note']`).value;
+  const body = new URLSearchParams({status, feedback_note});
+  await fetch(`/update/${id}/`, {method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')}, body});
+}
+function getCookie(name){
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+document.querySelectorAll("[data-kind='status']").forEach(el=>el.addEventListener('change',()=>save(el.dataset.id)));
+document.querySelectorAll("[data-kind='note']").forEach(el=>el.addEventListener('blur',()=>save(el.dataset.id)));
+
+// Manual theme toggle (with persistence)
+const themeToggle = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('radar_theme');
+
+function applyTheme(theme) {
+  document.body.classList.remove('dark', 'light');
+  if (theme === 'dark') document.body.classList.add('dark');
+  if (theme === 'light') document.body.classList.add('light');
+}
+
+if (savedTheme === 'dark' || savedTheme === 'light') {
+  applyTheme(savedTheme);
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const isDarkNow = document.body.classList.contains('dark') || (!document.body.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const nextTheme = isDarkNow ? 'light' : 'dark';
+    applyTheme(nextTheme);
+    localStorage.setItem('radar_theme', nextTheme);
+  });
+}
+
+// Auto-apply filters without button
+const filtersForm = document.getElementById('filtersForm');
+const filterIds = ['filter_category','filter_status','filter_min_score','filter_sort_by','filter_sort_order'];
+filterIds.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', () => filtersForm.submit());
+});
+
+const qInput = document.getElementById('filter_q');
+let qTimer = null;
+if (qInput) {
+  qInput.addEventListener('input', () => {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => filtersForm.submit(), 450);
+  });
+}
+
+// Fun visual: when Afonso collides with any lion, spawn another lion (with a safety cap).
+const walkerAfonso = document.getElementById('walkerAfonso');
+const walkerLion = document.getElementById('walkerLion');
+let collisionCooldownUntil = 0;
+const MAX_LIONS = 20;
+
+function overlaps(a, b) {
+  if (!a || !b) return false;
+  const ra = a.getBoundingClientRect();
+  const rb = b.getBoundingClientRect();
+  return !(ra.right < rb.left || ra.left > rb.right || ra.bottom < rb.top || ra.top > rb.bottom);
+}
+
+function spawnLion(atLion) {
+  const lions = document.querySelectorAll('.dashboard-lion');
+  if (!walkerLion || lions.length >= MAX_LIONS) return;
+
+  const clone = walkerLion.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.add('clone');
+
+  if (atLion) {
+    const r = atLion.getBoundingClientRect();
+    clone.style.left = `${(r.left / window.innerWidth) * 100}vw`;
+    clone.style.top = `${(r.top / window.innerHeight) * 100}vh`;
+  } else {
+    clone.style.left = `${10 + Math.floor(Math.random() * 75)}vw`;
+    clone.style.top = `${10 + Math.floor(Math.random() * 70)}vh`;
+  }
+
+  clone.style.opacity = String(0.14 + Math.random() * 0.16);
+
+  // Random path checkpoints so each lion has a distinct route.
+  const rndX = () => `${4 + Math.floor(Math.random() * 88)}vw`;
+  const rndY = () => `${6 + Math.floor(Math.random() * 82)}vh`;
+  clone.style.setProperty('--x0', rndX());
+  clone.style.setProperty('--y0', rndY());
+  clone.style.setProperty('--x1', rndX());
+  clone.style.setProperty('--y1', rndY());
+  clone.style.setProperty('--x2', rndX());
+  clone.style.setProperty('--y2', rndY());
+  clone.style.setProperty('--x3', rndX());
+  clone.style.setProperty('--y3', rndY());
+  clone.style.setProperty('--x4', rndX());
+  clone.style.setProperty('--y4', rndY());
+
+  // Slightly different tempo per clone so movement feels alive.
+  const roam = (14 + Math.random() * 8).toFixed(2);
+  const hop = (0.95 + Math.random() * 0.7).toFixed(2);
+  const tilt = (1.4 + Math.random() * 1.2).toFixed(2);
+  clone.style.animationDuration = `${roam}s, ${hop}s, ${tilt}s`;
+
+  document.body.appendChild(clone);
+}
+
+function maybeSpawnLionClone() {
+  if (!walkerAfonso || !walkerLion) {
+    requestAnimationFrame(maybeSpawnLionClone);
+    return;
+  }
+
+  const now = Date.now();
+  if (now >= collisionCooldownUntil) {
+    const lions = document.querySelectorAll('.dashboard-lion');
+    for (const lion of lions) {
+      if (overlaps(walkerAfonso, lion)) {
+        spawnLion(lion);
+        collisionCooldownUntil = now + 1400;
+        break;
+      }
+    }
+  }
+
+  requestAnimationFrame(maybeSpawnLionClone);
+}
+
+requestAnimationFrame(maybeSpawnLionClone);
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+body { font-family: Georgia, 'Times New Roman', serif; margin: 0; background: #f7f4ef; color: #1f2937; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.controls { display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 12px; }
+input, select { padding: 8px; border:1px solid #ccc; border-radius: 6px; }
+table { width:100%; border-collapse: collapse; background:#fff; }
+th, td { border-bottom:1px solid #eee; text-align:left; padding: 12px 10px; vertical-align: top; }
+tr:hover { background:#faf8f3; }
+.badge { padding: 4px 8px; border-radius: 8px; font-size: 12px; }
+.favorite { background:#d8f3dc; }
+.irrelevant { background:#ffe5e5; }
+.review { background:#fff3cd; }
+.new { background:#f1f3f5; }
